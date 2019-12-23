@@ -4,9 +4,6 @@
 #include <unistd.h>
 
 // macro
-#ifndef CTXCO_DEFAULT_STACK_SIZE
-#    define CTXCO_DEFAULT_STACK_SIZE 2 * 1024 * 1024
-#endif
 
 #define CTXCO_BLOCK (ctxco_request_ref_t) - 1
 

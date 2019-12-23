@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <sys/queue.h>
 
+#ifndef CTXCO_DEFAULT_STACK_SIZE
+#    define CTXCO_DEFAULT_STACK_SIZE 2 * 1024 * 1024
+#endif
+
 typedef struct ctxco_t {
     ctx_ref_t ctx;
     ctxco_func_t entry;
