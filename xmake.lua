@@ -17,6 +17,7 @@ if is_mode("debug") then
 end
 
 if is_mode("release") then
+    set_symbols("hide")
     set_strip("all")
     add_cxflags("-fomit-frame-pointer")
     add_mxflags("-fomit-frame-pointer")

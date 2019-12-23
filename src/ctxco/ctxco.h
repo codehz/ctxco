@@ -4,6 +4,11 @@
 #include <unistd.h>
 
 // macro
+#ifdef __GNUC__
+#define CTXCO_EXPORT __attribute__((visibility("default")))
+#else
+#define CTXCO_EXPORT
+#endif
 
 #define CTXCO_BLOCK (ctxco_request_ref_t) - 1
 
@@ -20,10 +25,10 @@ typedef void (*ctxco_func_t)(void *priv);
 typedef void (*ctxco_poller_func_t)(void *priv, ctxco_request_ref_t co);
 
 // function
-void ctxco_init(ctxco_poller_func_t poller, void *priv);
-void ctxco_deinit();
-void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize);
-void ctxco_loop();
-bool ctxco_yield();
-void *ctxco_invoke(void *request);
-void ctxco_resume(ctxco_impl_t co, void *ret);
+CTXCO_EXPORT void ctxco_init(ctxco_poller_func_t poller, void *priv);
+CTXCO_EXPORT void ctxco_deinit();
+CTXCO_EXPORT void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize);
+CTXCO_EXPORT void ctxco_loop();
+CTXCO_EXPORT bool ctxco_yield();
+CTXCO_EXPORT void *ctxco_invoke(void *request);
+CTXCO_EXPORT void ctxco_resume(ctxco_impl_t co, void *ret);
