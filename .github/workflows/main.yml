@@ -1,0 +1,23 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        shared: [y, n]
+        mode: [debug, release]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: setup xmake
+      uses: xmake-io/github-action-setup-xmake@v1.0.1
+      with:
+        xmake-version: latest
+    - name: Run tests
+      run: |
+        xmake config --demo=y --mode=${{ matrix.mode }} --shared=${{ matrix.shared }}
+        xmake build -v -D
+        xmake run demo_simple
