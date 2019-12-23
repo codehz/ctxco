@@ -1,6 +1,6 @@
 set_project("ctxco")
 set_version("0.0.1")
-set_xmakever("2.2.9")
+set_xmakever("2.2.8")
 set_warnings("all", "error")
 set_languages("gnu15")
 
