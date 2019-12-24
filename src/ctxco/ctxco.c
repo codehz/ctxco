@@ -13,10 +13,11 @@ typedef struct ctxco_t {
     ctx_ref_t ctx;
     ctxco_func_t entry;
     void *priv;
+    void *base;
     STAILQ_ENTRY(ctxco_t) next;
 } ctxco_t, *ctxco_ref_t;
 
-typedef STAILQ_HEAD(ctxco_list_t, ctxco_t) ctxco_list_t;
+typedef STAILQ_HEAD(ctxco_list_t, ctxco_t) ctxco_list_t, *ctxco_list_ref_t;
 
 typedef struct ctxco_poller_t {
     ctxco_poller_func_t entry;
@@ -27,6 +28,7 @@ typedef struct ctxco_scheduler_t {
     ctxco_t main;
     ctxco_ref_t running;
     ctxco_list_t ready;
+    ctxco_list_t dead;
     ctxco_poller_t poller;
     size_t pending;
 } ctxco_scheduler_t, *ctxco_scheduler_ref_t;
@@ -42,15 +44,21 @@ void ctxco_init(ctxco_poller_func_t poller, void *priv) {
 
     global_scheduler->running = &global_scheduler->main;
     STAILQ_INIT(&global_scheduler->ready);
+    STAILQ_INIT(&global_scheduler->dead);
     global_scheduler->poller = (ctxco_poller_t){poller ?: empty_poller, priv};
 }
 
-void ctxco_deinit() {
+static void free_list(ctxco_list_ref_t list) {
     ctxco_ref_t co_next;
-    while ((co_next = STAILQ_FIRST(&global_scheduler->ready))) {
-        STAILQ_REMOVE_HEAD(&global_scheduler->ready, next);
-        free(co_next);
+    while ((co_next = STAILQ_FIRST(list))) {
+        STAILQ_REMOVE_HEAD(list, next);
+        free(co_next->base);
     }
+}
+
+void ctxco_deinit() {
+    free_list(&global_scheduler->ready);
+    free_list(&global_scheduler->dead);
 
     free(global_scheduler);
     global_scheduler = NULL;
@@ -79,6 +87,7 @@ static void ctxco_entry(ctx_from_t from) {
     co->entry(co->priv);
 
     STAILQ_REMOVE(&global_scheduler->ready, co, ctxco_t, next);
+    STAILQ_INSERT_TAIL(&global_scheduler->dead, co, next);
     ctxco_ref_t co_next = STAILQ_FIRST(&global_scheduler->ready);
     if (co_next) {
         ctxco_switch(co_next);
@@ -95,6 +104,7 @@ void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize) {
     ref->ctx   = getctx(buffer, stacksize, ctxco_entry);
     ref->entry = func;
     ref->priv  = priv;
+    ref->base  = buffer;
 }
 
 void ctxco_loop() {
@@ -103,8 +113,10 @@ void ctxco_loop() {
         while ((co_next = STAILQ_FIRST(&global_scheduler->ready))) {
             ctxco_switch(co_next);
             if (global_scheduler->pending) global_scheduler->poller.entry(global_scheduler->poller.priv, NULL);
+            free_list(&global_scheduler->dead);
         }
         if (global_scheduler->pending) global_scheduler->poller.entry(global_scheduler->poller.priv, CTXCO_BLOCK);
+        free_list(&global_scheduler->dead);
     } while (STAILQ_FIRST(&global_scheduler->ready));
 }
 
@@ -113,6 +125,7 @@ bool ctxco_yield() {
     ctxco_ref_t co      = global_scheduler->running;
     if (co_next && co_next != co) {
         ctxco_switch(co_next);
+        free_list(&global_scheduler->dead);
         return true;
     }
     return false;

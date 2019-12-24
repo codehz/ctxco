@@ -76,7 +76,7 @@ int main() {
 
     srand(time(NULL));
 
-    for (size_t i = 0; i < 100; i++) ctxco_start(timer_co, (void *) i, 128 * 1024);
+    for (size_t i = 0; i < 20; i++) ctxco_start(timer_co, (void *) i, 128 * 1024);
 
     ctxco_loop();
 
