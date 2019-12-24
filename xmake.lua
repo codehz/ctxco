@@ -34,13 +34,7 @@ target("demo_epoll")
     add_files("src/demo/epoll.c")
 target_end()
 
-option("bsd_tree")
-    set_default(false)
-    add_cincludes("bsd/sys/tree.h")
-option_end()
-
 target("demo_echo_server")
-    add_options("bsd_tree")
     set_default(has_config("demo"))
     set_kind("binary")
     add_deps("ctxco")
