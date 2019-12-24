@@ -23,6 +23,7 @@ void epoll_poller(void *priv, ctxco_request_ref_t co) {
     poller_data_ref_t ref = (poller_data_ref_t) priv;
 
     if (co == NULL || co == CTXCO_BLOCK) {
+        if (ref->count == 0) return;
         struct epoll_event evts[8];
         int nfds = epoll_wait(ref->epfd, evts, 8, co == CTXCO_BLOCK ? -1 : 1);
         if (nfds == -1) {
@@ -30,6 +31,7 @@ void epoll_poller(void *priv, ctxco_request_ref_t co) {
             abort();
         }
         for (int i = 0; i < nfds; i++) {
+            ref->count--;
             ctxco_resume((ctxco_impl_t) evts[i].data.ptr, (void *) (uint64_t) evts[i].events);
         }
     } else {
@@ -41,7 +43,8 @@ void epoll_poller(void *priv, ctxco_request_ref_t co) {
         if (ret == -1) {
             printf("Failed to epoll add: %s", strerror(errno));
             ctxco_resume(co->ctx, NULL);
-        }
+        } else
+            ref->count++;
     }
 }
 
