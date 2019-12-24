@@ -97,10 +97,10 @@ static void ctxco_entry(ctx_from_t from) {
 
 void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize) {
     if (!stacksize) stacksize = CTXCO_DEFAULT_STACK_SIZE;
-    void *buffer    = malloc(stacksize + sizeof(ctxco_t));
+    void *buffer    = malloc(stacksize);
     ctxco_ref_t ref = buffer;
     STAILQ_INSERT_TAIL(&global_scheduler->ready, ref, next);
-    ref->ctx   = getctx(buffer + sizeof(ctxco_t), stacksize, ctxco_entry);
+    ref->ctx   = getctx(buffer + sizeof(ctxco_t), stacksize - sizeof(ctxco_t), ctxco_entry);
     ref->entry = func;
     ref->priv  = priv;
 }
