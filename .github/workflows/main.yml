@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         shared: [y, n]
-        mode: [debug, release]
+        mode: [debug, release, check]
     runs-on: ubuntu-latest
 
     steps:
@@ -16,9 +16,9 @@ jobs:
       uses: xmake-io/github-action-setup-xmake@v1.0.1
       with:
         xmake-version: latest
-    - name: Run tests
-      run: |
-        xmake config --demo=y --mode=${{ matrix.mode }} --shared=${{ matrix.shared }}
-        xmake build -v -D
-        xmake run demo_simple
-        xmake run demo_epoll
+    - name: config
+      run:  xmake config --demo=y --mode=${{ matrix.mode }} --shared=${{ matrix.shared }}
+    - name: build
+      run: xmake build -v -D
+    - name: test
+      run: xmake run
