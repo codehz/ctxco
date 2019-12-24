@@ -14,10 +14,6 @@ option("demo")
 option_end()
 
 target("ctxco")
-    if is_kind("shared") then
-        add_cxflags("-fPIC")
-        add_ldflags("-fPIC")
-    end
     set_kind("$(kind)")
     set_default(true)
     add_files("src/ctxco/*.c", "src/ctxco/ctx.S")
