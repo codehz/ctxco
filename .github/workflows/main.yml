@@ -21,6 +21,6 @@ jobs:
     - name: build
       run: xmake build -v -D
     - name: test [simple]
-      run: xmake run simple
+      run: xmake run demo_simple
     - name: test [epoll]
-      run: xmake run epoll
+      run: xmake run demo_epoll
