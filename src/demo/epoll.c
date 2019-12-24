@@ -1,52 +1,12 @@
 #include "../ctxco/ctxco.h"
 
+#include "epoll_impl.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <time.h>
 #include <unistd.h>
-
-typedef struct poller_data_t {
-    int epfd;
-    int count;
-} poller_data_t, *poller_data_ref_t;
-
-typedef struct epoll_req_t {
-    int fd;
-    int events;
-} epoll_req_t, *epoll_req_ref_t;
-
-void epoll_poller(void *priv, ctxco_request_ref_t co) {
-    poller_data_ref_t ref = (poller_data_ref_t) priv;
-
-    if (co == NULL || co == CTXCO_BLOCK) {
-        if (ref->count == 0) return;
-        struct epoll_event evts[8];
-        int nfds = epoll_wait(ref->epfd, evts, 8, co == CTXCO_BLOCK ? -1 : 1);
-        if (nfds == -1) {
-            printf("Failed to epoll: %s", strerror(errno));
-            abort();
-        }
-        for (int i = 0; i < nfds; i++) {
-            ref->count--;
-            ctxco_resume((ctxco_impl_t) evts[i].data.ptr, (void *) (uint64_t) evts[i].events);
-        }
-    } else {
-        epoll_req_ref_t req = (epoll_req_ref_t) co->priv;
-        struct epoll_event event;
-        event.events   = req->events | EPOLLONESHOT;
-        event.data.ptr = co->ctx;
-        int ret        = epoll_ctl(ref->epfd, EPOLL_CTL_ADD, req->fd, &event);
-        if (ret == -1) {
-            printf("Failed to epoll add: %s", strerror(errno));
-            ctxco_resume(co->ctx, NULL);
-        } else
-            ref->count++;
-    }
-}
 
 void timer_co(void *priv) {
     int tfd                 = timerfd_create(1, TFD_NONBLOCK | TFD_CLOEXEC);
@@ -67,7 +27,7 @@ void timer_co(void *priv) {
         char buf[sizeof(uint64_t)];
     } u;
     int ret = read(tfd, u.buf, sizeof u.buf);
-    if (ret == -1) { printf("Failed to read from timerfd: %s", strerror(errno)); }
+    if (ret == -1) { printf("Failed to read from timerfd: %s\n", strerror(errno)); }
 
     close(tfd);
 }
