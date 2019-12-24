@@ -72,8 +72,9 @@ void server_co(void *priv) {
 
     if (listen(server, 8) < 0) fatal("Failed to listen: %s\n", strerror(errno));
 
+    printf("start accept ([::1]:8818)\n");
+
     while (1) {
-        printf("start accept\n");
         uint64_t ret = (uint64_t) ctxco_invoke(&(epoll_req_t){server, EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR});
         if (ret != EPOLLIN) break;
         struct sockaddr_in6 client;
