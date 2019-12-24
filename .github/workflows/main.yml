@@ -20,5 +20,7 @@ jobs:
       run:  xmake config --demo=y --mode=${{ matrix.mode }} --kind=${{ matrix.kind }}
     - name: build
       run: xmake build -v -D
-    - name: test
-      run: xmake run
+    - name: test [simple]
+      run: xmake run simple
+    - name: test [epoll]
+      run: xmake run epoll
