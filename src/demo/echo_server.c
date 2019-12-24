@@ -65,7 +65,7 @@ void server_co(void *priv) {
     struct sockaddr_in6 addr = {};
     addr.sin6_family         = AF_INET6;
     addr.sin6_port           = htons(8818);
-    addr.sin6_addr           = in6addr_loopback;
+    addr.sin6_addr           = in6addr_any;
 
     if (bind(server, (const struct sockaddr *) &addr, sizeof addr) < 0)
         fatal("Failed to bind port 8818: %s\n", strerror(errno));
