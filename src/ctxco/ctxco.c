@@ -28,6 +28,7 @@ typedef struct ctxco_scheduler_t {
     ctxco_ref_t running;
     ctxco_list_t ready;
     ctxco_poller_t poller;
+    size_t pending;
 } ctxco_scheduler_t, *ctxco_scheduler_ref_t;
 
 static __thread ctxco_scheduler_ref_t global_scheduler = NULL;
@@ -101,9 +102,9 @@ void ctxco_loop() {
     do {
         while ((co_next = STAILQ_FIRST(&global_scheduler->ready))) {
             ctxco_switch(co_next);
-            global_scheduler->poller.entry(global_scheduler->poller.priv, NULL);
+            if (global_scheduler->pending) global_scheduler->poller.entry(global_scheduler->poller.priv, NULL);
         }
-        global_scheduler->poller.entry(global_scheduler->poller.priv, CTXCO_BLOCK);
+        if (global_scheduler->pending) global_scheduler->poller.entry(global_scheduler->poller.priv, CTXCO_BLOCK);
     } while (STAILQ_FIRST(&global_scheduler->ready));
 }
 
@@ -127,11 +128,13 @@ void *ctxco_invoke(void *request) {
 
     ctxco_poller_ref_t poller = &global_scheduler->poller;
     poller->entry(poller->priv, &req);
+    global_scheduler->pending++;
     if (co_next) {
         ctxco_switch(co_next);
     } else {
         ctxco_switch(&global_scheduler->main);
     }
+    global_scheduler->pending--;
     return co->priv;
 }
 
