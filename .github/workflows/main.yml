@@ -21,3 +21,4 @@ jobs:
         xmake config --demo=y --mode=${{ matrix.mode }} --shared=${{ matrix.shared }}
         xmake build -v -D
         xmake run demo_simple
+        xmake run demo_epoll
