@@ -13,7 +13,6 @@ typedef struct ctxco_t {
     ctx_ref_t ctx;
     ctxco_func_t entry;
     void *priv;
-    void *base;
     STAILQ_ENTRY(ctxco_t) next;
 } ctxco_t, *ctxco_ref_t;
 
@@ -52,7 +51,7 @@ static void free_list(ctxco_list_ref_t list) {
     ctxco_ref_t co_next;
     while ((co_next = STAILQ_FIRST(list))) {
         STAILQ_REMOVE_HEAD(list, next);
-        free(co_next->base);
+        free(co_next);
     }
 }
 
@@ -99,12 +98,11 @@ static void ctxco_entry(ctx_from_t from) {
 void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize) {
     if (!stacksize) stacksize = CTXCO_DEFAULT_STACK_SIZE;
     void *buffer    = malloc(stacksize + sizeof(ctxco_t));
-    ctxco_ref_t ref = buffer + stacksize;
+    ctxco_ref_t ref = buffer;
     STAILQ_INSERT_TAIL(&global_scheduler->ready, ref, next);
-    ref->ctx   = getctx(buffer, stacksize, ctxco_entry);
+    ref->ctx   = getctx(buffer + sizeof(ctxco_t), stacksize, ctxco_entry);
     ref->entry = func;
     ref->priv  = priv;
-    ref->base  = buffer;
 }
 
 void ctxco_loop() {
