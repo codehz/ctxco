@@ -136,9 +136,9 @@ void *ctxco_invoke(int op, ...) {
     ctxco_ref_t co_next = STAILQ_FIRST(&global_scheduler->ready);
 
     ctxco_poller_ref_t poller = &global_scheduler->poller;
-    va_start(req.list, op);
+    va_start(req.arg, op);
     poller->entry(poller->priv, &req);
-    va_end(req.list);
+    va_end(req.arg);
     if (co_next) {
         ctxco_switch(co_next);
     } else {

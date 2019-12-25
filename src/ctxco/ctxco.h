@@ -20,7 +20,7 @@ typedef struct {
 typedef struct {
     ctxco_impl_t ctx;
     int op;
-    va_list list;
+    va_list arg;
 } ctxco_request_t, *ctxco_request_ref_t;
 
 typedef void (*ctxco_func_t)(void *priv);

@@ -34,7 +34,7 @@ static void epoll_poller(void *priv, ctxco_request_ref_t co) {
             epoll_ctl(ref->epfd, EPOLL_CTL_DEL, req->fd, NULL);
         }
     } else {
-        epoll_req_ref_t req = va_arg(co->list, epoll_req_ref_t);
+        epoll_req_ref_t req = va_arg(co->arg, epoll_req_ref_t);
         req->rco            = co->ctx;
         struct epoll_event event;
         event.events   = co->op;
