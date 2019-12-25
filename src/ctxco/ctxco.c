@@ -128,16 +128,17 @@ bool ctxco_yield() {
     return false;
 }
 
-void *ctxco_invoke(void *request) {
+void *ctxco_invoke(int op, ...) {
     ctxco_ref_t co = global_scheduler->running;
 
-    ctxco_request_t req = {(ctxco_impl_t) co, request};
-
+    ctxco_request_t req = {(ctxco_impl_t) co, op};
     STAILQ_REMOVE(&global_scheduler->ready, co, ctxco_t, next);
     ctxco_ref_t co_next = STAILQ_FIRST(&global_scheduler->ready);
 
     ctxco_poller_ref_t poller = &global_scheduler->poller;
+    va_start(req.list, op);
     poller->entry(poller->priv, &req);
+    va_end(req.list);
     if (co_next) {
         ctxco_switch(co_next);
     } else {

@@ -13,7 +13,7 @@ void ctxco_deinit();
 void ctxco_start(ctxco_func_t func, void *priv, size_t stacksize);
 void ctxco_loop();
 bool ctxco_yield();
-void *ctxco_invoke(void *request);
+void *ctxco_invoke(int op, ...);
 void ctxco_resume(ctxco_impl_t co, void *ret);
 ```
 

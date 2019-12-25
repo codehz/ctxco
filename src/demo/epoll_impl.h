@@ -13,7 +13,6 @@ typedef struct poller_data_t {
 
 typedef struct epoll_req_t {
     int fd;
-    int events;
     ctxco_impl_t rco;
 } epoll_req_t, *epoll_req_ref_t;
 
@@ -35,10 +34,10 @@ static void epoll_poller(void *priv, ctxco_request_ref_t co) {
             epoll_ctl(ref->epfd, EPOLL_CTL_DEL, req->fd, NULL);
         }
     } else {
-        epoll_req_ref_t req = (epoll_req_ref_t) co->priv;
+        epoll_req_ref_t req = va_arg(co->list, epoll_req_ref_t);
+        req->rco            = co->ctx;
         struct epoll_event event;
-        req->rco       = co->ctx;
-        event.events   = req->events | EPOLLET;
+        event.events   = co->op;
         event.data.ptr = req;
         int ret        = epoll_ctl(ref->epfd, EPOLL_CTL_ADD, req->fd, &event);
         if (ret == -1) {

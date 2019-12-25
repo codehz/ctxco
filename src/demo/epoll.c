@@ -14,11 +14,9 @@ void timer_co(void *priv) {
     timer.it_value.tv_nsec  = 1000000 * (rand() % 800 + 200);
     timerfd_settime(tfd, 0, &timer, NULL);
 
-    epoll_req_t req = {tfd, EPOLLIN};
-
     printf("start invoke [%ld]\n", (size_t) priv);
 
-    ctxco_invoke(&req);
+    ctxco_invoke(EPOLLIN, &(epoll_req_t){tfd});
 
     printf("end invoke [%ld]\n", (size_t) priv);
 

@@ -22,7 +22,7 @@ void signal_catcher() {
     sigprocmask(SIG_BLOCK, &sigset, NULL);
     int sfd = signalfd(-1, &sigset, SFD_NONBLOCK | SFD_CLOEXEC);
     while (1) {
-        uint64_t ret = (uint64_t) ctxco_invoke(&(epoll_req_t){sfd, EPOLLIN | EPOLLERR});
+        uint64_t ret = (uint64_t) ctxco_invoke(EPOLLIN | EPOLLERR, &(epoll_req_t){sfd});
         if (ret != EPOLLIN) {
             printf("Failed to invoke epoll from signalfd: %s\n", strerror(errno));
             goto end;
@@ -75,7 +75,7 @@ void server_co(void *priv) {
     printf("start accept ([::1]:8818)\n");
 
     while (1) {
-        uint64_t ret = (uint64_t) ctxco_invoke(&(epoll_req_t){server, EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR});
+        uint64_t ret = (uint64_t) ctxco_invoke(EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR, &(epoll_req_t){server});
         if (ret != EPOLLIN) break;
         struct sockaddr_in6 client;
         socklen_t len;
@@ -92,7 +92,7 @@ void server_co(void *priv) {
 void client_co(void *priv) {
     int client = (int) (int64_t) priv;
     while (1) {
-        uint64_t ret = (uint64_t) ctxco_invoke(&(epoll_req_t){client, EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR});
+        uint64_t ret = (uint64_t) ctxco_invoke(EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR, &(epoll_req_t){client});
         if (ret != EPOLLIN) break;
         char buffer[32 * 1024];
         size_t offset = 0;
@@ -111,7 +111,7 @@ void client_co(void *priv) {
                 }
                 offset += written;
                 if (offset == len) break;
-                ret = (uint64_t) ctxco_invoke(&(epoll_req_t){client, EPOLLOUT | EPOLLHUP | EPOLLRDHUP | EPOLLERR});
+                ret = (uint64_t) ctxco_invoke(EPOLLOUT | EPOLLHUP | EPOLLRDHUP | EPOLLERR, &(epoll_req_t){client});
                 if (ret != EPOLLOUT) break;
             };
         }
