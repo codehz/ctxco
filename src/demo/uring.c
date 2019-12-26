@@ -222,7 +222,6 @@ void server_co(void *priv) {
         ssize_t clifd = (ssize_t) ctxco_invoke(IORING_OP_ACCEPT, server, &client, &len, SOCK_CLOEXEC);
         if (clifd < 0) fatal("Failed to accept connection: %s\n", strerror(-clifd));
         ctxco_start(client_co, (void *) (ssize_t) clifd, 128 * 1024);
-        // ctxco_yield();
     }
 
     close(server);
