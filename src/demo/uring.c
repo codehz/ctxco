@@ -25,18 +25,17 @@ void io_uring_poller(void *priv, ctxco_request_ref_t co) {
         for (unsigned i = 0; i < len; i++) {
             io_uring_cqe_seen(&ref->ring, cqes[i]);
             ctxco_impl_t ctx = (ctxco_impl_t) io_uring_cqe_get_data(cqes[i]);
-            ctxco_resume(ctx, (void *) (size_t) cqes[i]->res);
+            ctxco_resume(ctx, (void *) (ssize_t) cqes[i]->res);
             ref->count--;
         }
     } else if (co == CTXCO_BLOCK) {
         if (ref->count == 0) return;
-        io_uring_poller(priv, NULL);
         struct io_uring_cqe *cqe = NULL;
         int ret                  = io_uring_wait_cqe(&ref->ring, &cqe);
         if (ret < 0) { return; }
         io_uring_cqe_seen(&ref->ring, cqe);
         ctxco_impl_t ctx = (ctxco_impl_t) io_uring_cqe_get_data(cqe);
-        ctxco_resume(ctx, (void *) (size_t) cqe->res);
+        ctxco_resume(ctx, (void *) (ssize_t) cqe->res);
         ref->count--;
         io_uring_poller(priv, NULL);
     } else {
@@ -220,11 +219,10 @@ void server_co(void *priv) {
     while (1) {
         struct sockaddr_in6 client;
         socklen_t len;
-        int clifd = (size_t) ctxco_invoke(IORING_OP_ACCEPT, server, &client, &len, SOCK_CLOEXEC);
-        printf("clifd: %d, %s\n", clifd, strerror(-clifd));
-        if (clifd < 0) fatal("Failed to accept connection: %d %s\n", errno, strerror(errno));
-        ctxco_start(client_co, (void *) (int64_t) clifd, 128 * 1024);
-        ctxco_yield();
+        ssize_t clifd = (ssize_t) ctxco_invoke(IORING_OP_ACCEPT, server, &client, &len, SOCK_CLOEXEC);
+        if (clifd < 0) fatal("Failed to accept connection: %s\n", strerror(-clifd));
+        ctxco_start(client_co, (void *) (ssize_t) clifd, 128 * 1024);
+        // ctxco_yield();
     }
 
     close(server);
@@ -235,10 +233,17 @@ void client_co(void *priv) {
     int client = (int) (int64_t) priv;
     while (1) {
         char buffer[32 * 1024];
-        off64_t ret = (off64_t) ctxco_invoke(IORING_OP_READ, client, buffer, sizeof buffer, 0);
+        struct msghdr msg;
+        struct iovec iov;
+        iov.iov_base   = buffer;
+        iov.iov_len    = sizeof buffer;
+        msg.msg_iov    = &iov;
+        msg.msg_iovlen = 1;
+        ssize_t ret    = (ssize_t) ctxco_invoke(IORING_OP_RECVMSG, client, &msg, 0);
         if (ret <= 0) break;
-        off64_t xret = (off64_t) ctxco_invoke(IORING_OP_WRITE, client, buffer, ret, 0);
-        if (ret != xret) break;
+        iov.iov_len = ret;
+        ret = (ssize_t) ctxco_invoke(IORING_OP_SENDMSG, client, &msg, 0);
+        if (ret <= 0) break;
     }
     close(client);
 }
