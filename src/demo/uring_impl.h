@@ -1,7 +1,7 @@
 #include "../ctxco/ctxco.h"
 
-#include <liburing.h>
 #include <errno.h>
+#include <liburing.h>
 
 typedef struct poller_data_t {
     struct io_uring ring;
@@ -141,7 +141,8 @@ void io_uring_poller(void *priv, ctxco_request_ref_t co) {
         case IORING_OP_FILES_UPDATE: {
             int *fds            = va_arg(co->arg, int *);
             unsigned int nr_fds = va_arg(co->arg, unsigned);
-            io_uring_prep_files_update(sqe, fds, nr_fds);
+            int offset          = va_arg(co->arg, int);
+            io_uring_prep_files_update(sqe, fds, nr_fds, offset);
         } break;
         case IORING_OP_FALLOCATE: {
             int fd       = va_arg(co->arg, int);
